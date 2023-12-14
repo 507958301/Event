@@ -19,16 +19,16 @@ struct nameStr {
 };
 
 
-class Handler {
+class IEventHandler {
 public:
     virtual void handle(const void* event) = 0;
-    virtual ~Handler() {}
+    virtual ~IEventHandler() {}
 };
 
 template<class T>
-class weightHandler : public Handler {
+class EventHandler : public IEventHandler {
 public:
-    weightHandler(std::function<void(const T&)> _handler) : m_handler(_handler) {}
+    EventHandler(std::function<void(const T&)> _handler) : m_handler(std::move(_handler)) {}
 
     void handle(const void* event) override {
         m_handler(*static_cast<const T*>(event));
@@ -40,11 +40,11 @@ private:
 
 class HandlerGroup {
 public:
-    void addHandler(Handler* handler) {
+    void addHandler(IEventHandler* handler) {
         handlers.push_back(handler);
     }
 
-    void removeHandler(Handler* handler) {
+    void removeHandler(IEventHandler* handler) {
         handlers.erase(std::remove(handlers.begin(), handlers.end(), handler), handlers.end());
     }
 
@@ -55,42 +55,45 @@ public:
     }
 
 private:
-    std::vector<Handler*> handlers;
+    std::vector<IEventHandler*> handlers;
 };
 
-class Person {
+class EventManager {
 public:
-    static Person& getInstance() {
-        static Person instance;
+    static EventManager& getInstance() {
+        static EventManager instance;
         return instance;
     }
-    template<typename E>
-    void registerHandler(std::function<void(const E&)> handler) {
-        if (handlers.find(typeid(E).name()) == handlers.end()) {
-            handlers[typeid(E).name()] = HandlerGroup();
+    template<typename E, typename Handler>
+    void registerHandler(Handler handler) {
+        nameStr name = typeid(E).name();
+        if (handlers.find(name) == handlers.end()) {
+            handlers[name] = HandlerGroup();
         }
-        auto newHandler = new weightHandler<E>(handler);
-        handlers[typeid(E).name()].addHandler(newHandler);
+        auto newHandler = new EventHandler<E>(std::move(handler));
+        handlers[name].addHandler(newHandler);
     }
 
     template<typename E>
     void unregisterHandler() {
-        if (handlers.find(typeid(E).name()) != handlers.end()) {
-            handlers.erase(typeid(E).name());
+        nameStr name = typeid(E).name();
+        if (handlers.find(name) != handlers.end()) {
+            handlers.erase(name);
         }
     }
 
     template<typename E>
     void post(const E& event) {
-        if (handlers.find(typeid(E).name()) != handlers.end()) {
-            handlers[typeid(E).name()].notifyHandlers(&event);
+        nameStr name = typeid(E).name();
+        if (handlers.find(name) != handlers.end()) {
+            handlers[name].notifyHandlers(&event);
         }
     }
 
 private:
-    Person() {}
-    Person(const Person&) = delete;
-    Person& operator=(const Person&) = delete;
+    EventManager() {}
+    EventManager(const EventManager&) = delete;
+    EventManager& operator=(const EventManager&) = delete;
 
     std::map<nameStr, HandlerGroup> handlers;
 };
