@@ -19,7 +19,7 @@ void printValue(people pp)
 void printValueBB(const people& pp)
 {
     const blackPoeple& blackpoeple = *static_cast<const blackPoeple*>(&pp);
-    std::cout << blackpoeple.age<<"  "<<blackpoeple.ll << "BB" << blackpoeple.color<<std::endl;
+    std::cout << blackpoeple.age<<"  "<<blackpoeple.ll << "BB" <<std::endl;
 }
 
 struct mat{
@@ -33,8 +33,8 @@ void printValueAA(mat pp){
 
 int main() 
 {
-    // auto handler = EventManager::getInstance().subsrcibeToEvent<people>(std::bind(printValue, std::placeholders::_1));
-    auto handler = EventManager::getInstance().subsrcibeToEvent<people>(std::bind(printValueBB, std::placeholders::_1));
+    auto handler = EventManager::getInstance().subsrcibeToEvent<people>(std::bind(printValue, std::placeholders::_1));
+    auto handler2 = EventManager::getInstance().subsrcibeToEvent<people>(std::bind(printValueBB, std::placeholders::_1));
     EventManager::getInstance().subsrcibeToEvent<mat>(std::bind(printValueAA, std::placeholders::_1));
     people ljj;
     ljj.age =18;
